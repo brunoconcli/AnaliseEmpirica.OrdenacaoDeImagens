@@ -11,21 +11,21 @@ namespace AnaliseEmpirica.OrdenacaoDeImagens.Instrumentacao;
 /// </remarks>
 public sealed class ComparadorContador<T> : IComparer<T>
 {
-    private readonly IComparer<T> _comparadorInterno;
-    private readonly Contadores _contadores;
+  private readonly IComparer<T> _comparadorInterno;
+  private readonly Contadores _contadores;
 
-    public ComparadorContador(IComparer<T> comparadorInterno, Contadores contadores)
-    {
-        ArgumentNullException.ThrowIfNull(comparadorInterno);
-        ArgumentNullException.ThrowIfNull(contadores);
+  public ComparadorContador(IComparer<T> comparadorInterno, Contadores contadores)
+  {
+    ArgumentNullException.ThrowIfNull(comparadorInterno);
+    ArgumentNullException.ThrowIfNull(contadores);
 
-        _comparadorInterno = comparadorInterno;
-        _contadores = contadores;
-    }
+    _comparadorInterno = comparadorInterno;
+    _contadores = contadores;
+  }
 
-    public int Compare(T? x, T? y)
-    {
-        _contadores.RegistrarComparacao();
-        return _comparadorInterno.Compare(x, y);
-    }
+  public int Compare(T? x, T? y)
+  {
+    _contadores.RegistrarComparacao();
+    return _comparadorInterno.Compare(x, y);
+  }
 }

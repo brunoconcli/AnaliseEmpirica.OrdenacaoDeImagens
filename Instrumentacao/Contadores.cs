@@ -17,21 +17,21 @@ namespace AnaliseEmpirica.OrdenacaoDeImagens.Instrumentacao;
 /// </remarks>
 public sealed class Contadores
 {
-    public long Comparacoes { get; private set; }
-    public long Movimentacoes { get; private set; }
+  public long Comparacoes { get; private set; }
+  public long Movimentacoes { get; private set; }
 
-    public void RegistrarComparacao() => Comparacoes++;
+  public void RegistrarComparacao() => Comparacoes++;
 
-    public void RegistrarMovimentacao() => Movimentacoes++;
+  public void RegistrarMovimentacao() => Movimentacoes++;
 
-    public void RegistrarMovimentacoes(long quantidade) => Movimentacoes += quantidade;
+  public void RegistrarMovimentacoes(long quantidade) => Movimentacoes += quantidade;
 
-    public void Zerar()
-    {
-        Comparacoes = 0;
-        Movimentacoes = 0;
-    }
+  public void Zerar()
+  {
+    Comparacoes = 0;
+    Movimentacoes = 0;
+  }
 
-    public override string ToString() =>
-        $"Comparações: {Comparacoes:N0} | Movimentações: {Movimentacoes:N0}";
+  public override string ToString() =>
+      $"Comparações: {Comparacoes:N0} | Movimentações: {Movimentacoes:N0}";
 }

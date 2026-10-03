@@ -12,10 +12,10 @@ using AnaliseEmpirica.OrdenacaoDeImagens.Instrumentacao;
 /// </remarks>
 public interface IAlgoritmoOrdenacao
 {
-    string Nome { get; }
+  string Nome { get; }
 
-    /// <summary>Indica se elementos equivalentes mantêm sua ordem relativa original.</summary>
-    bool Estavel { get; }
+  /// <summary>Indica se elementos equivalentes mantêm sua ordem relativa original.</summary>
+  bool Estavel { get; }
 
-    void Ordenar<T>(T[] vetor, IComparer<T> comparador, Contadores contadores);
+  void Ordenar<T>(T[] vetor, IComparer<T> comparador, Contadores contadores);
 }

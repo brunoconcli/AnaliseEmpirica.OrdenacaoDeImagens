@@ -14,28 +14,28 @@ using AnaliseEmpirica.OrdenacaoDeImagens.Instrumentacao;
 /// </remarks>
 public sealed class SelectionSort : IAlgoritmoOrdenacao
 {
-    public string Nome => "Selection Sort";
-    public bool Estavel => false;
+  public string Nome => "Selection Sort";
+  public bool Estavel => false;
 
-    public void Ordenar<T>(T[] vetor, IComparer<T> comparador, Contadores contadores)
+  public void Ordenar<T>(T[] vetor, IComparer<T> comparador, Contadores contadores)
+  {
+    ArgumentNullException.ThrowIfNull(vetor);
+    ArgumentNullException.ThrowIfNull(comparador);
+    ArgumentNullException.ThrowIfNull(contadores);
+
+    for (int i = 0; i < vetor.Length - 1; i++)
     {
-        ArgumentNullException.ThrowIfNull(vetor);
-        ArgumentNullException.ThrowIfNull(comparador);
-        ArgumentNullException.ThrowIfNull(contadores);
+      int indiceMinimo = i;
 
-        for (int i = 0; i < vetor.Length - 1; i++)
+      for (int j = i + 1; j < vetor.Length; j++)
+      {
+        if (comparador.Compare(vetor[j], vetor[indiceMinimo]) < 0)
         {
-            int indiceMinimo = i;
-
-            for (int j = i + 1; j < vetor.Length; j++)
-            {
-                if (comparador.Compare(vetor[j], vetor[indiceMinimo]) < 0)
-                {
-                    indiceMinimo = j;
-                }
-            }
-
-            OperacoesVetor.Trocar(vetor, i, indiceMinimo, contadores);
+          indiceMinimo = j;
         }
+      }
+
+      OperacoesVetor.Trocar(vetor, i, indiceMinimo, contadores);
     }
+  }
 }

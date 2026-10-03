@@ -5,15 +5,15 @@ namespace AnaliseEmpirica.OrdenacaoDeImagens.Modelos;
 /// </summary>
 public enum CasoDeEntrada
 {
-    /// <summary>Permutação aleatória (caso médio).</summary>
-    Aleatorio,
+  /// <summary>Permutação aleatória (caso médio).</summary>
+  Aleatorio,
 
-    /// <summary>Já ordenado segundo o critério.</summary>
-    Crescente,
+  /// <summary>Já ordenado segundo o critério.</summary>
+  Crescente,
 
-    /// <summary>Ordenado no sentido inverso ao do critério.</summary>
-    Decrescente,
+  /// <summary>Ordenado no sentido inverso ao do critério.</summary>
+  Decrescente,
 
-    /// <summary>Ordenado, com uma pequena fração de elementos fora de posição.</summary>
-    QuaseOrdenado
+  /// <summary>Ordenado, com uma pequena fração de elementos fora de posição.</summary>
+  QuaseOrdenado
 }

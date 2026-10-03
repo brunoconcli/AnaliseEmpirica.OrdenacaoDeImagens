@@ -1,0 +1,37 @@
+root = true
+
+[*]
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.md]
+# Dois espaços no fim da linha são quebra de linha no Markdown.
+trim_trailing_whitespace = false
+
+[*.cs]
+# Namespace e usings
+csharp_style_namespace_declarations = file_scoped:warning
+csharp_using_directive_placement = inside_namespace:warning
+dotnet_sort_system_directives_first = true
+
+# Chaves sempre em nova linha e sempre presentes
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+csharp_prefer_braces = true:warning
+
+# Indentação
+csharp_indent_case_contents = true
+csharp_indent_switch_labels = true
+
+# Nomes: campos privados com prefixo "_" e camelCase
+dotnet_naming_rule.campos_privados.symbols = campos_privados
+dotnet_naming_rule.campos_privados.style = prefixo_sublinhado
+dotnet_naming_rule.campos_privados.severity = warning
+dotnet_naming_symbols.campos_privados.applicable_kinds = field
+dotnet_naming_symbols.campos_privados.applicable_accessibilities = private
+dotnet_naming_style.prefixo_sublinhado.capitalization = camel_case
+dotnet_naming_style.prefixo_sublinhado.required_prefix = _

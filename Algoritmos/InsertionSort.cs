@@ -13,29 +13,29 @@ using AnaliseEmpirica.OrdenacaoDeImagens.Instrumentacao;
 /// </remarks>
 public sealed class InsertionSort : IAlgoritmoOrdenacao
 {
-    public string Nome => "Insertion Sort";
-    public bool Estavel => true;
+  public string Nome => "Insertion Sort";
+  public bool Estavel => true;
 
-    public void Ordenar<T>(T[] vetor, IComparer<T> comparador, Contadores contadores)
+  public void Ordenar<T>(T[] vetor, IComparer<T> comparador, Contadores contadores)
+  {
+    ArgumentNullException.ThrowIfNull(vetor);
+    ArgumentNullException.ThrowIfNull(comparador);
+    ArgumentNullException.ThrowIfNull(contadores);
+
+    for (int i = 1; i < vetor.Length; i++)
     {
-        ArgumentNullException.ThrowIfNull(vetor);
-        ArgumentNullException.ThrowIfNull(comparador);
-        ArgumentNullException.ThrowIfNull(contadores);
+      T chave = vetor[i];
+      int j = i - 1;
 
-        for (int i = 1; i < vetor.Length; i++)
-        {
-            T chave = vetor[i];
-            int j = i - 1;
+      while (j >= 0 && comparador.Compare(vetor[j], chave) > 0)
+      {
+        vetor[j + 1] = vetor[j];
+        contadores.RegistrarMovimentacao();
+        j--;
+      }
 
-            while (j >= 0 && comparador.Compare(vetor[j], chave) > 0)
-            {
-                vetor[j + 1] = vetor[j];
-                contadores.RegistrarMovimentacao();
-                j--;
-            }
-
-            vetor[j + 1] = chave;
-            contadores.RegistrarMovimentacao();
-        }
+      vetor[j + 1] = chave;
+      contadores.RegistrarMovimentacao();
     }
+  }
 }

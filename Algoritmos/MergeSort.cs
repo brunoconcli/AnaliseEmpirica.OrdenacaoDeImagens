@@ -14,71 +14,71 @@ using AnaliseEmpirica.OrdenacaoDeImagens.Instrumentacao;
 /// </remarks>
 public sealed class MergeSort : IAlgoritmoOrdenacao
 {
-    public string Nome => "Merge Sort";
-    public bool Estavel => true;
+  public string Nome => "Merge Sort";
+  public bool Estavel => true;
 
-    public void Ordenar<T>(T[] vetor, IComparer<T> comparador, Contadores contadores)
+  public void Ordenar<T>(T[] vetor, IComparer<T> comparador, Contadores contadores)
+  {
+    ArgumentNullException.ThrowIfNull(vetor);
+    ArgumentNullException.ThrowIfNull(comparador);
+    ArgumentNullException.ThrowIfNull(contadores);
+
+    if (vetor.Length < 2)
     {
-        ArgumentNullException.ThrowIfNull(vetor);
-        ArgumentNullException.ThrowIfNull(comparador);
-        ArgumentNullException.ThrowIfNull(contadores);
-
-        if (vetor.Length < 2)
-        {
-            return;
-        }
-
-        // Alocado uma única vez para não somar o custo de alocação a cada intercalação.
-        var auxiliar = new T[vetor.Length];
-        OrdenarIntervalo(vetor, auxiliar, 0, vetor.Length - 1, comparador, contadores);
+      return;
     }
 
-    private static void OrdenarIntervalo<T>(
-        T[] vetor, T[] auxiliar, int inicio, int fim, IComparer<T> comparador, Contadores contadores)
-    {
-        if (inicio >= fim)
-        {
-            return;
-        }
+    // Alocado uma única vez para não somar o custo de alocação a cada intercalação.
+    var auxiliar = new T[vetor.Length];
+    OrdenarIntervalo(vetor, auxiliar, 0, vetor.Length - 1, comparador, contadores);
+  }
 
-        int meio = inicio + (fim - inicio) / 2;
-        OrdenarIntervalo(vetor, auxiliar, inicio, meio, comparador, contadores);
-        OrdenarIntervalo(vetor, auxiliar, meio + 1, fim, comparador, contadores);
-        Intercalar(vetor, auxiliar, inicio, meio, fim, comparador, contadores);
+  private static void OrdenarIntervalo<T>(
+      T[] vetor, T[] auxiliar, int inicio, int fim, IComparer<T> comparador, Contadores contadores)
+  {
+    if (inicio >= fim)
+    {
+      return;
     }
 
-    private static void Intercalar<T>(
-        T[] vetor, T[] auxiliar, int inicio, int meio, int fim, IComparer<T> comparador, Contadores contadores)
+    int meio = inicio + (fim - inicio) / 2;
+    OrdenarIntervalo(vetor, auxiliar, inicio, meio, comparador, contadores);
+    OrdenarIntervalo(vetor, auxiliar, meio + 1, fim, comparador, contadores);
+    Intercalar(vetor, auxiliar, inicio, meio, fim, comparador, contadores);
+  }
+
+  private static void Intercalar<T>(
+      T[] vetor, T[] auxiliar, int inicio, int meio, int fim, IComparer<T> comparador, Contadores contadores)
+  {
+    for (int k = inicio; k <= fim; k++)
     {
-        for (int k = inicio; k <= fim; k++)
-        {
-            auxiliar[k] = vetor[k];
-        }
-        contadores.RegistrarMovimentacoes(fim - inicio + 1);
-
-        int esquerda = inicio;
-        int direita = meio + 1;
-
-        for (int k = inicio; k <= fim; k++)
-        {
-            if (esquerda > meio)
-            {
-                vetor[k] = auxiliar[direita++];
-            }
-            else if (direita > fim)
-            {
-                vetor[k] = auxiliar[esquerda++];
-            }
-            else if (comparador.Compare(auxiliar[direita], auxiliar[esquerda]) < 0)
-            {
-                vetor[k] = auxiliar[direita++];
-            }
-            else
-            {
-                vetor[k] = auxiliar[esquerda++];
-            }
-
-            contadores.RegistrarMovimentacao();
-        }
+      auxiliar[k] = vetor[k];
     }
+    contadores.RegistrarMovimentacoes(fim - inicio + 1);
+
+    int esquerda = inicio;
+    int direita = meio + 1;
+
+    for (int k = inicio; k <= fim; k++)
+    {
+      if (esquerda > meio)
+      {
+        vetor[k] = auxiliar[direita++];
+      }
+      else if (direita > fim)
+      {
+        vetor[k] = auxiliar[esquerda++];
+      }
+      else if (comparador.Compare(auxiliar[direita], auxiliar[esquerda]) < 0)
+      {
+        vetor[k] = auxiliar[direita++];
+      }
+      else
+      {
+        vetor[k] = auxiliar[esquerda++];
+      }
+
+      contadores.RegistrarMovimentacao();
+    }
+  }
 }

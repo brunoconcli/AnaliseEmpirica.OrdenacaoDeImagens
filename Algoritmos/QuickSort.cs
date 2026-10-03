@@ -18,56 +18,56 @@ using AnaliseEmpirica.OrdenacaoDeImagens.Instrumentacao;
 /// </remarks>
 public sealed class QuickSort : IAlgoritmoOrdenacao
 {
-    public string Nome => "Quick Sort";
-    public bool Estavel => false;
+  public string Nome => "Quick Sort";
+  public bool Estavel => false;
 
-    public void Ordenar<T>(T[] vetor, IComparer<T> comparador, Contadores contadores)
+  public void Ordenar<T>(T[] vetor, IComparer<T> comparador, Contadores contadores)
+  {
+    ArgumentNullException.ThrowIfNull(vetor);
+    ArgumentNullException.ThrowIfNull(comparador);
+    ArgumentNullException.ThrowIfNull(contadores);
+
+    OrdenarIntervalo(vetor, 0, vetor.Length - 1, comparador, contadores);
+  }
+
+  private static void OrdenarIntervalo<T>(T[] vetor, int inicio, int fim, IComparer<T> comparador, Contadores contadores)
+  {
+    while (inicio < fim)
     {
-        ArgumentNullException.ThrowIfNull(vetor);
-        ArgumentNullException.ThrowIfNull(comparador);
-        ArgumentNullException.ThrowIfNull(contadores);
+      int posicaoPivo = Particionar(vetor, inicio, fim, comparador, contadores);
 
-        OrdenarIntervalo(vetor, 0, vetor.Length - 1, comparador, contadores);
+      if (posicaoPivo - inicio < fim - posicaoPivo)
+      {
+        OrdenarIntervalo(vetor, inicio, posicaoPivo - 1, comparador, contadores);
+        inicio = posicaoPivo + 1;
+      }
+      else
+      {
+        OrdenarIntervalo(vetor, posicaoPivo + 1, fim, comparador, contadores);
+        fim = posicaoPivo - 1;
+      }
+    }
+  }
+
+  /// <summary>
+  /// Partição de Lomuto: usa vetor[fim] como pivô e deixa à sua esquerda os
+  /// elementos menores ou iguais a ele. Retorna a posição final do pivô.
+  /// </summary>
+  private static int Particionar<T>(T[] vetor, int inicio, int fim, IComparer<T> comparador, Contadores contadores)
+  {
+    T pivo = vetor[fim];
+    int i = inicio - 1;
+
+    for (int j = inicio; j < fim; j++)
+    {
+      if (comparador.Compare(vetor[j], pivo) <= 0)
+      {
+        i++;
+        OperacoesVetor.Trocar(vetor, i, j, contadores);
+      }
     }
 
-    private static void OrdenarIntervalo<T>(T[] vetor, int inicio, int fim, IComparer<T> comparador, Contadores contadores)
-    {
-        while (inicio < fim)
-        {
-            int posicaoPivo = Particionar(vetor, inicio, fim, comparador, contadores);
-
-            if (posicaoPivo - inicio < fim - posicaoPivo)
-            {
-                OrdenarIntervalo(vetor, inicio, posicaoPivo - 1, comparador, contadores);
-                inicio = posicaoPivo + 1;
-            }
-            else
-            {
-                OrdenarIntervalo(vetor, posicaoPivo + 1, fim, comparador, contadores);
-                fim = posicaoPivo - 1;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Partição de Lomuto: usa vetor[fim] como pivô e deixa à sua esquerda os
-    /// elementos menores ou iguais a ele. Retorna a posição final do pivô.
-    /// </summary>
-    private static int Particionar<T>(T[] vetor, int inicio, int fim, IComparer<T> comparador, Contadores contadores)
-    {
-        T pivo = vetor[fim];
-        int i = inicio - 1;
-
-        for (int j = inicio; j < fim; j++)
-        {
-            if (comparador.Compare(vetor[j], pivo) <= 0)
-            {
-                i++;
-                OperacoesVetor.Trocar(vetor, i, j, contadores);
-            }
-        }
-
-        OperacoesVetor.Trocar(vetor, i + 1, fim, contadores);
-        return i + 1;
-    }
+    OperacoesVetor.Trocar(vetor, i + 1, fim, contadores);
+    return i + 1;
+  }
 }
