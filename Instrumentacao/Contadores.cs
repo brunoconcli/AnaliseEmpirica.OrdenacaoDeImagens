@@ -7,7 +7,7 @@ namespace AnaliseEmpirica.OrdenacaoDeImagens.Instrumentacao;
 /// Regras de contagem (iguais para todos os algoritmos):
 /// <list type="bullet">
 ///   <item><b>Comparação:</b> cada chamada ao comparador entre dois elementos.
-///   É registrada pelo <see cref="ComparadorContador{T}"/>, nunca pelo algoritmo.</item>
+///   É registrada pelo <see cref="ContadorComparer{T}"/>, nunca pelo algoritmo.</item>
 ///   <item><b>Movimentação:</b> cada escrita de um elemento em uma posição de vetor,
 ///   seja o vetor de entrada ou um vetor auxiliar. Cópias para variáveis locais
 ///   (ex.: a "chave" do Insertion Sort) não contam. Uma troca equivale a 2 movimentações.</item>

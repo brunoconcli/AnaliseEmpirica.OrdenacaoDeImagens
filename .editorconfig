@@ -27,6 +27,14 @@ csharp_prefer_braces = true:warning
 csharp_indent_case_contents = true
 csharp_indent_switch_labels = true
 
+# Nomes: constantes em PascalCase (regra declarada antes para ter prioridade sobre a de campos)
+dotnet_naming_rule.constantes.symbols = constantes
+dotnet_naming_rule.constantes.style = pascal_case
+dotnet_naming_rule.constantes.severity = warning
+dotnet_naming_symbols.constantes.applicable_kinds = field
+dotnet_naming_symbols.constantes.required_modifiers = const
+dotnet_naming_style.pascal_case.capitalization = pascal_case
+
 # Nomes: campos privados com prefixo "_" e camelCase
 dotnet_naming_rule.campos_privados.symbols = campos_privados
 dotnet_naming_rule.campos_privados.style = prefixo_sublinhado

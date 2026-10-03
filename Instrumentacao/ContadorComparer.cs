@@ -9,12 +9,12 @@ namespace AnaliseEmpirica.OrdenacaoDeImagens.Instrumentacao;
 /// Como o envoltório adiciona uma chamada extra por comparação, as execuções que
 /// medem tempo devem usar o comparador original, sem este envoltório.
 /// </remarks>
-public sealed class ComparadorContador<T> : IComparer<T>
+public sealed class ContadorComparer<T> : IComparer<T>
 {
   private readonly IComparer<T> _comparadorInterno;
   private readonly Contadores _contadores;
 
-  public ComparadorContador(IComparer<T> comparadorInterno, Contadores contadores)
+  public ContadorComparer(IComparer<T> comparadorInterno, Contadores contadores)
   {
     ArgumentNullException.ThrowIfNull(comparadorInterno);
     ArgumentNullException.ThrowIfNull(contadores);
@@ -28,4 +28,6 @@ public sealed class ComparadorContador<T> : IComparer<T>
     _contadores.RegistrarComparacao();
     return _comparadorInterno.Compare(x, y);
   }
+
+  public override string? ToString() => _comparadorInterno.ToString();
 }
