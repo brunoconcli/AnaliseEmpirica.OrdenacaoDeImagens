@@ -45,8 +45,11 @@ public sealed class ExtratorItemImagem
   /// Processa, em paralelo, todas as imagens suportadas da pasta e de suas subpastas.
   /// Arquivos que falham são registrados em <see cref="ResultadoExtracao.Falhas"/> sem interromper o restante.
   /// </summary>
-  /// <param name="progresso">Recebe o número de arquivos já processados.</param>
-  public ResultadoExtracao ExtrairPasta(string pasta, IProgress<int>? progresso = null)
+  /// <param name="progresso">
+  /// Recebe o número de arquivos já processados e o total. É chamado a partir de
+  /// várias threads, então a implementação precisa ser segura para concorrência.
+  /// </param>
+  public ResultadoExtracao ExtrairPasta(string pasta, IProgress<(int Processados, int Total)>? progresso = null)
   {
     if (!Directory.Exists(pasta))
     {
@@ -74,7 +77,7 @@ public sealed class ExtratorItemImagem
         falhas.Add(new FalhaExtracao(arquivos[i], ex.Message));
       }
 
-      progresso?.Report(Interlocked.Increment(ref processados));
+      progresso?.Report((Interlocked.Increment(ref processados), arquivos.Length));
     });
 
     // Mantém a ordem dos arquivos (e não a ordem de término das threads), para que

@@ -33,7 +33,7 @@ public sealed class PreProcessador
   public ImagemRgb Carregar(string caminhoArquivo)
   {
     using var original = SKBitmap.Decode(caminhoArquivo)
-        ?? throw new InvalidDataException($"Não foi possível decodificar a imagem '{caminhoArquivo}'.");
+        ?? throw new InvalidDataException("Formato não reconhecido ou arquivo corrompido.");
 
     var destino = new SKImageInfo(_lado, _lado, SKColorType.Rgba8888, SKAlphaType.Unpremul);
     // Filtragem linear com mipmaps: na redução forte (ex.: 4000 px → 128 px) cada pixel
@@ -41,7 +41,7 @@ public sealed class PreProcessador
     var amostragem = new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear);
 
     using var redimensionada = original.Resize(destino, amostragem)
-        ?? throw new InvalidDataException($"Não foi possível redimensionar a imagem '{caminhoArquivo}'.");
+        ?? throw new InvalidDataException("Não foi possível redimensionar a imagem.");
 
     SKColor[] pixels = redimensionada.Pixels;
     var dadosRgb = new byte[pixels.Length * 3];

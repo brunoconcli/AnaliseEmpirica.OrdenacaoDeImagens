@@ -1,2 +1,6 @@
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
+using System.Text;
+
+using AnaliseEmpirica.OrdenacaoDeImagens.Cli;
+
+Console.OutputEncoding = Encoding.UTF8;
+return Aplicacao.Executar(args);
