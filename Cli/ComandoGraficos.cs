@@ -73,7 +73,7 @@ public sealed class ComandoGraficos : IComando
   {
     if (!Directory.Exists(PastaResultadosPadrao))
     {
-      throw new ErroDeUsoException($"A pasta '{PastaResultadosPadrao}' não existe. Rode o comando benchmark antes.");
+      throw new ErroDeUsoException($"A pasta '{PastaResultadosPadrao}' não existe. Rode o comando gerar-resultados antes.");
     }
 
     // O nome contém data e hora (benchmark_AAAAMMDD_HHMMSS), então a ordem alfabética é a cronológica.

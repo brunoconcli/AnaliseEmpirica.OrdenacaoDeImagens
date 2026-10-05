@@ -6,7 +6,7 @@ namespace AnaliseEmpirica.OrdenacaoDeImagens.Cli;
 /// </summary>
 public static class Aplicacao
 {
-  private static readonly IComando[] _comandos = [new ComandoExtrair(), new ComandoOrdenar(), new ComandoBenchmark(), new ComandoGraficos()];
+  private static readonly IComando[] _comandos = [new ComandoExtrair(), new ComandoOrdenar(), new ComandoGerarResultados(), new ComandoGraficos()];
 
   public static int Executar(string[] args)
   {
@@ -58,7 +58,7 @@ public static class Aplicacao
     Console.WriteLine("Comandos:");
     foreach (var comando in _comandos)
     {
-      Console.WriteLine($"  {comando.Nome,-10} {comando.Resumo}");
+      Console.WriteLine($"  {comando.Nome,-18} {comando.Resumo}");
     }
 
     Console.WriteLine();

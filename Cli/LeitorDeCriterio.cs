@@ -8,7 +8,7 @@ public sealed record Criterio(IComparer<ItemImagem> Comparador, Func<ItemImagem,
 
 /// <summary>
 /// Monta o critério de ordenação a partir das opções --por, --ordem, --largura-faixa,
-/// --desempate e --referencia, compartilhadas pelos comandos ordenar e benchmark.
+/// --desempate e --referencia, compartilhadas pelos comandos ordenar e gerar-resultados.
 /// </summary>
 public static class LeitorDeCriterio
 {

@@ -64,7 +64,7 @@ public sealed class ComandoOrdenar : IComando
       Console.WriteLine($"{algoritmo.Nome,-16} {medicao.Comparacoes,14:N0} {medicao.Movimentacoes,14:N0} {medicao.TempoMs,12:F3}");
     }
 
-    Console.WriteLine("Tempo indicativo, sem aquecimento nem repetições; para medidas confiáveis, use o comando benchmark.");
+    Console.WriteLine("Tempo indicativo, sem aquecimento nem repetições; para medidas confiáveis, use o comando gerar-resultados.");
     Console.WriteLine();
 
     ImprimirResultado(ordenados!, criterio, limite);

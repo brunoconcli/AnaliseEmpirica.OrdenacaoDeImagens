@@ -13,7 +13,7 @@ using AnaliseEmpirica.OrdenacaoDeImagens.Modelos;
 /// Executa a bateria de experimentos descrita em docs/metodologia.md e grava
 /// os resultados brutos, o resumo estatístico e a descrição do ambiente.
 /// </summary>
-public sealed class ComandoBenchmark : IComando
+public sealed class ComandoGerarResultados : IComando
 {
   private const string CriterioPadrao = "luminosidade";
   private const string PastaResultadosPadrao = "resultados";
@@ -27,18 +27,18 @@ public sealed class ComandoBenchmark : IComando
     ["original"] = CasoDeEntrada.OrdemOriginal,
   };
 
-  public string Nome => "benchmark";
+  public string Nome => "gerar-resultados";
 
   public string Resumo => "Mede os algoritmos em vários tamanhos, casos de entrada e repetições (ver docs/metodologia.md)";
 
   public string Uso => $"""
-      Uso: benchmark [arquivo.csv] [opções]
+      Uso: gerar-resultados [arquivo.csv] [opções]
 
       Lê as propriedades do CSV gerado por "extrair" (padrão: {Caminhos.Features}).
-      Execute em Release para medir tempos confiáveis: dotnet run -c Release -- benchmark ...
+      Execute em Release para medir tempos confiáveis: dotnet run -c Release -- gerar-resultados ...
 
       {LeitorDeCriterio.Uso}
-        (padrão do benchmark: --por {CriterioPadrao})
+        (padrão deste comando: --por {CriterioPadrao})
 
       Opções:
         --algoritmos <lista>|todos     Ex.: merge,quick (padrão: todos)
@@ -64,7 +64,7 @@ public sealed class ComandoBenchmark : IComando
         $"benchmark_{DateTime.Now:yyyyMMdd_HHmmss}");
 
 #if DEBUG
-    Console.WriteLine("ATENÇÃO: build Debug. Os tempos não são representativos; use: dotnet run -c Release -- benchmark ...");
+    Console.WriteLine("ATENÇÃO: build Debug. Os tempos não são representativos; use: dotnet run -c Release -- gerar-resultados ...");
     Console.WriteLine();
 #endif
 
