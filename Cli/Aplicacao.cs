@@ -6,7 +6,7 @@ namespace AnaliseEmpirica.OrdenacaoDeImagens.Cli;
 /// </summary>
 public static class Aplicacao
 {
-  private static readonly IComando[] _comandos = [new ComandoExtrair(), new ComandoOrdenar()];
+  private static readonly IComando[] _comandos = [new ComandoExtrair(), new ComandoOrdenar(), new ComandoBenchmark(), new ComandoGraficos()];
 
   public static int Executar(string[] args)
   {

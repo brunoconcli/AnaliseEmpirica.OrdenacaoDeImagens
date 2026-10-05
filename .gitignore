@@ -49,3 +49,5 @@ package-lock.json
 package.json
 # Dados do projeto (imagens, features.csv, cópias ordenadas)
 dados/
+resultados/
+docs/claude

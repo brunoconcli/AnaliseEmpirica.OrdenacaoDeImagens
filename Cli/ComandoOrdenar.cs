@@ -1,11 +1,8 @@
 namespace AnaliseEmpirica.OrdenacaoDeImagens.Cli;
 
-using System.Diagnostics;
-
 using AnaliseEmpirica.OrdenacaoDeImagens.Algoritmos;
-using AnaliseEmpirica.OrdenacaoDeImagens.Comparacao;
+using AnaliseEmpirica.OrdenacaoDeImagens.Experimentos;
 using AnaliseEmpirica.OrdenacaoDeImagens.Extracao;
-using AnaliseEmpirica.OrdenacaoDeImagens.Instrumentacao;
 using AnaliseEmpirica.OrdenacaoDeImagens.Modelos;
 
 /// <summary>
@@ -14,7 +11,7 @@ using AnaliseEmpirica.OrdenacaoDeImagens.Modelos;
 public sealed class ComandoOrdenar : IComando
 {
   private const int LimitePadrao = 20;
-  private const double LarguraFaixaPadrao = 30;
+  private const string AlgoritmoPadrao = "merge";
   private const string TodosOsAlgoritmos = "todos";
 
   public string Nome => "ordenar";
@@ -26,17 +23,10 @@ public sealed class ComandoOrdenar : IComando
 
       Lê as propriedades do CSV gerado por "extrair" (padrão: {Caminhos.Features}).
 
-      Critérios (--por):
-        luminosidade | tonalidade | saturacao | complexidade | entropia
-        faixa-tonalidade      Faixas de tonalidade e, dentro delas, desempate por outra propriedade
-            --largura-faixa <graus>    Largura de cada faixa (padrão: {LarguraFaixaPadrao})
-            --desempate <propriedade>  Propriedade de desempate (padrão: luminosidade)
-        distancia             Da imagem mais parecida com a referência até a mais diferente
-            --referencia <arquivo>     Caminho ou nome de uma imagem presente no CSV
+      {LeitorDeCriterio.Uso}
 
       Opções:
-        --ordem asc|desc               Crescente ou decrescente (padrão: asc)
-        --algoritmo <nome>|todos       {string.Join(", ", CatalogoDeAlgoritmos.Nomes)} ou todos (padrão: merge)
+        --algoritmo <nome>|todos       {string.Join(", ", CatalogoDeAlgoritmos.Nomes)} ou todos (padrão: {AlgoritmoPadrao})
         --limite <n>                   Quantas imagens listar; 0 lista todas (padrão: {LimitePadrao})
         --copiar-para <pasta>          Copia as imagens para a pasta, numeradas na ordem do resultado
                                        (a pasta não pode existir ou deve estar vazia)
@@ -44,28 +34,23 @@ public sealed class ComandoOrdenar : IComando
 
   public int Executar(ArgumentosLinhaDeComando argumentos)
   {
-    argumentos.ValidarOpcoes("por", "ordem", "algoritmo", "largura-faixa", "desempate", "referencia", "limite", "copiar-para");
+    argumentos.ValidarOpcoes([.. LeitorDeCriterio.Opcoes, "algoritmo", "limite", "copiar-para"]);
 
-    string caminhoCsv = argumentos.Posicional(0) ?? Caminhos.Features;
-    if (!File.Exists(caminhoCsv))
-    {
-      throw new ErroDeUsoException($"Arquivo não encontrado: '{caminhoCsv}'. Rode o comando \"extrair\" antes.");
-    }
-
-    ItemImagem[] itens = [.. CacheDePropriedades.Ler(caminhoCsv)];
-    if (itens.Length == 0)
-    {
-      throw new ErroDeUsoException($"O arquivo '{caminhoCsv}' não contém imagens.");
-    }
-
-    var criterio = MontarCriterio(argumentos, itens);
-    var algoritmos = ObterAlgoritmos(argumentos.Texto("algoritmo") ?? "merge");
+    var itens = LeitorDeFeatures.Ler(argumentos.Posicional(0));
+    var criterio = LeitorDeCriterio.Ler(argumentos, itens);
+    string nomeAlgoritmo = argumentos.Texto("algoritmo") ?? AlgoritmoPadrao;
+    var algoritmos = ObterAlgoritmos(nomeAlgoritmo);
     int limite = argumentos.Inteiro("limite", LimitePadrao);
     string? pastaCopia = argumentos.Texto("copiar-para");
     ValidarPastaCopia(pastaCopia);
 
     Console.WriteLine($"Critério: {criterio.Comparador}");
     Console.WriteLine($"Imagens: {itens.Length}");
+    if (!argumentos.Tem("algoritmo"))
+    {
+      Console.WriteLine($"Algoritmo: {algoritmos[0].Nome} (padrão; use --algoritmo para escolher outro ou \"todos\")");
+    }
+
     Console.WriteLine();
 
     ItemImagem[]? ordenados = null;
@@ -73,14 +58,13 @@ public sealed class ComandoOrdenar : IComando
 
     foreach (var algoritmo in algoritmos)
     {
-      var execucao = Executar(algoritmo, itens, criterio.Comparador);
-      ordenados ??= execucao.Ordenados;
+      var medicao = MedidorDeExecucao.Medir(algoritmo, itens, criterio.Comparador, MedidorDeExecucao.TempoMinimoPadrao);
+      ordenados ??= medicao.Ordenado;
 
-      Console.WriteLine(
-          $"{algoritmo.Nome,-16} {execucao.Contadores.Comparacoes,14:N0} {execucao.Contadores.Movimentacoes,14:N0} {execucao.TempoMs,12:F3}");
+      Console.WriteLine($"{algoritmo.Nome,-16} {medicao.Comparacoes,14:N0} {medicao.Movimentacoes,14:N0} {medicao.TempoMs,12:F3}");
     }
 
-    Console.WriteLine("Tempo de uma única execução, sem contagem de comparações; para medidas confiáveis, use o benchmark.");
+    Console.WriteLine("Tempo indicativo, sem aquecimento nem repetições; para medidas confiáveis, use o comando benchmark.");
     Console.WriteLine();
 
     ImprimirResultado(ordenados!, criterio, limite);
@@ -91,31 +75,6 @@ public sealed class ComandoOrdenar : IComando
     }
 
     return 0;
-  }
-
-  private static (ItemImagem[] Ordenados, Contadores Contadores, double TempoMs) Executar(
-      IAlgoritmoOrdenacao algoritmo, ItemImagem[] itens, IComparer<ItemImagem> comparador)
-  {
-    // Execução instrumentada: contagem de comparações e movimentações.
-    var contadores = new Contadores();
-    var ordenados = (ItemImagem[])itens.Clone();
-    algoritmo.Ordenar(ordenados, new ContadorComparer<ItemImagem>(comparador, contadores), contadores);
-
-    for (int i = 1; i < ordenados.Length; i++)
-    {
-      if (comparador.Compare(ordenados[i - 1], ordenados[i]) > 0)
-      {
-        throw new InvalidOperationException($"{algoritmo.Nome} produziu uma saída fora de ordem na posição {i}.");
-      }
-    }
-
-    // Execução de tempo: comparador original, sem o envoltório de contagem.
-    var copia = (ItemImagem[])itens.Clone();
-    var cronometro = Stopwatch.StartNew();
-    algoritmo.Ordenar(copia, comparador, new Contadores());
-    cronometro.Stop();
-
-    return (ordenados, contadores, cronometro.Elapsed.TotalMilliseconds);
   }
 
   private static void ImprimirResultado(ItemImagem[] ordenados, Criterio criterio, int limite)
@@ -176,104 +135,6 @@ public sealed class ComandoOrdenar : IComando
       return [.. CatalogoDeAlgoritmos.Todos];
     }
 
-    return CatalogoDeAlgoritmos.TryObter(nome, out var algoritmo)
-        ? [algoritmo]
-        : throw new ErroDeUsoException(
-            $"Algoritmo desconhecido: '{nome}'. Use {string.Join(", ", CatalogoDeAlgoritmos.Nomes)} ou {TodosOsAlgoritmos}.");
+    return [LeitorDeFeatures.ObterAlgoritmo(nome)];
   }
-
-  private static Criterio MontarCriterio(ArgumentosLinhaDeComando argumentos, ItemImagem[] itens)
-  {
-    string por = ArgumentosLinhaDeComando.Normalizar(
-        argumentos.Texto("por") ?? throw new ErroDeUsoException("Informe o critério com --por."));
-    var ordem = LerOrdem(argumentos.Texto("ordem") ?? "asc");
-
-    switch (por)
-    {
-      case "faixa-tonalidade":
-        {
-          double largura = argumentos.Real("largura-faixa", LarguraFaixaPadrao);
-          var desempate = LerPropriedade(argumentos.Texto("desempate") ?? "luminosidade");
-          var faixas = new FaixaTonalidadeComparer(largura, desempate);
-
-          return new Criterio(
-              ComparerFactory.PorFaixaDeTonalidade(largura, desempate, ordem),
-              item =>
-              {
-                int faixa = faixas.ObterFaixa(item);
-                string textoFaixa = faixa < 0 ? "acromática" : $"faixa {faixa}";
-                return $"{textoFaixa} | {desempate} {item.ObterValor(desempate):F2}";
-              });
-        }
-
-      case "distancia":
-        {
-          var referencia = EncontrarReferencia(
-              argumentos.Texto("referencia") ?? throw new ErroDeUsoException("O critério distancia precisa de --referencia."),
-              itens);
-
-          return new Criterio(
-              ComparerFactory.PorDistancia(referencia, ordem: ordem),
-              item => $"d = {DistanciaReferencia.Calcular(item, referencia, PesosDistancia.Iguais):F4}");
-        }
-
-      default:
-        {
-          var propriedade = LerPropriedade(por);
-          return new Criterio(
-              ComparerFactory.PorPropriedade(propriedade, ordem),
-              item => propriedade == Propriedade.Tonalidade && item.IsAcromatica
-                  ? "acromática"
-                  : $"{item.ObterValor(propriedade):F4}");
-        }
-    }
-  }
-
-  private static Propriedade LerPropriedade(string texto)
-  {
-    string normalizado = ArgumentosLinhaDeComando.Normalizar(texto);
-    foreach (var propriedade in Enum.GetValues<Propriedade>())
-    {
-      if (ArgumentosLinhaDeComando.Normalizar(propriedade.ToString()) == normalizado)
-      {
-        return propriedade;
-      }
-    }
-
-    throw new ErroDeUsoException(
-        $"Critério desconhecido: '{texto}'. Use luminosidade, tonalidade, saturacao, complexidade, entropia, faixa-tonalidade ou distancia.");
-  }
-
-  private static Ordem LerOrdem(string texto) => ArgumentosLinhaDeComando.Normalizar(texto) switch
-  {
-    "asc" or "crescente" => Ordem.Crescente,
-    "desc" or "decrescente" => Ordem.Decrescente,
-    _ => throw new ErroDeUsoException($"Ordem desconhecida: '{texto}'. Use asc ou desc."),
-  };
-
-  /// <summary>Procura a imagem de referência no CSV pelo caminho completo ou, se não houver, pelo nome do arquivo.</summary>
-  private static ItemImagem EncontrarReferencia(string referencia, ItemImagem[] itens)
-  {
-    string caminhoCompleto = Path.GetFullPath(referencia);
-    var porCaminho = itens.FirstOrDefault(i =>
-        string.Equals(Path.GetFullPath(i.CaminhoArquivo), caminhoCompleto, StringComparison.OrdinalIgnoreCase));
-    if (porCaminho is not null)
-    {
-      return porCaminho;
-    }
-
-    var porNome = itens
-        .Where(i => string.Equals(Path.GetFileName(i.CaminhoArquivo), referencia, StringComparison.OrdinalIgnoreCase))
-        .ToList();
-
-    return porNome.Count switch
-    {
-      1 => porNome[0],
-      0 => throw new ErroDeUsoException($"A imagem de referência '{referencia}' não está no CSV. Ela precisa ter sido extraída junto com as demais."),
-      _ => throw new ErroDeUsoException($"Há {porNome.Count} imagens chamadas '{referencia}' no CSV. Informe o caminho completo."),
-    };
-  }
-
-  /// <summary>Comparador do critério escolhido e a forma de exibir o valor que ele compara.</summary>
-  private sealed record Criterio(IComparer<ItemImagem> Comparador, Func<ItemImagem, string> DescreverValor);
 }

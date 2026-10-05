@@ -84,8 +84,30 @@ public sealed class ArgumentosLinhaDeComando
         : throw new ErroDeUsoException($"A opção --{nome} espera um número, mas recebeu '{texto}'.");
   }
 
+  /// <summary>Valores separados por vírgula (ex.: --casos aleatorio,crescente). Nulo se a opção não foi informada.</summary>
+  public IReadOnlyList<string>? Lista(string nome)
+  {
+    string? texto = Texto(nome);
+    if (texto is null)
+    {
+      return null;
+    }
+
+    var valores = texto.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    return valores.Length > 0
+        ? valores
+        : throw new ErroDeUsoException($"A opção --{nome} precisa de ao menos um valor.");
+  }
+
+  /// <summary>Inteiros separados por vírgula (ex.: --tamanhos 100,500,1000). Nulo se a opção não foi informada.</summary>
+  public IReadOnlyList<int>? ListaDeInteiros(string nome) => Lista(nome)?
+      .Select(texto => int.TryParse(texto, NumberStyles.Integer, CultureInfo.InvariantCulture, out int valor)
+          ? valor
+          : throw new ErroDeUsoException($"A opção --{nome} espera números inteiros, mas recebeu '{texto}'."))
+      .ToList();
+
   /// <summary>Rejeita opções desconhecidas, para que um erro de digitação não seja ignorado em silêncio.</summary>
-  public void ValidarOpcoes(params string[] conhecidas)
+  public void ValidarOpcoes(params IEnumerable<string> conhecidas)
   {
     var desconhecidas = _opcoes.Keys.Except(conhecidas, StringComparer.OrdinalIgnoreCase).ToList();
     if (desconhecidas.Count > 0)

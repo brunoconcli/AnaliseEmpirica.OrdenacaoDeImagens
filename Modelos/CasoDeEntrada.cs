@@ -15,5 +15,8 @@ public enum CasoDeEntrada
   Decrescente,
 
   /// <summary>Ordenado, com uma pequena fração de elementos fora de posição.</summary>
-  QuaseOrdenado
+  QuaseOrdenado,
+
+  /// <summary>Mantido na ordem em que as imagens aparecem no arquivo de origem (ex.: ordem temporal das fotos).</summary>
+  OrdemOriginal
 }
