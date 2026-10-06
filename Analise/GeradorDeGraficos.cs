@@ -50,6 +50,20 @@ public sealed class GeradorDeGraficos
           linha => linha.ComparacoesMedia,
           desvio: null);
 
+  /// <summary>
+  /// Comparações × n em escala linear, um painel por caso. Mostra a forma do crescimento:
+  /// n² vira parábola e n·log n, uma linha quase reta. As curvas quadráticas dominam a escala.
+  /// </summary>
+  public void SalvarComparacoesPorCasoLinear(string caminhoPng) =>
+      SalvarPainelLinearPorCaso(caminhoPng, "Comparações", linha => linha.ComparacoesMedia, somenteSubquadraticos: false);
+
+  /// <summary>
+  /// Como <see cref="SalvarComparacoesPorCasoLinear"/>, mas omitindo em cada painel as séries
+  /// quadráticas, para que a forma das curvas n·log n fique visível.
+  /// </summary>
+  public void SalvarComparacoesPorCasoLinearSubquadraticos(string caminhoPng) =>
+      SalvarPainelLinearPorCaso(caminhoPng, "Comparações", linha => linha.ComparacoesMedia, somenteSubquadraticos: true);
+
   /// <summary>Tempo × n em log-log (média ± desvio padrão), um painel por caso de entrada.</summary>
   public void SalvarTempoPorCaso(string caminhoPng) =>
       SalvarPainelPorCaso(
@@ -246,7 +260,7 @@ public sealed class GeradorDeGraficos
         LabelFormatter = EstiloGraficos.FormatarPotenciaDeDez,
       };
       grafico.Axes.SetLimits(minimoX - folgaX, maximoX + folgaX, minimoY, maximoY);
-      AnotarSobreposicoes(grafico, series, maximoX + folgaX, minimoY);
+      Anotar(grafico, DescreverSobreposicoes(series), maximoX + folgaX, minimoY);
 
       // Uma única legenda, no primeiro painel: as cores e formas são as mesmas em todos.
       if (i == 0)
@@ -264,11 +278,123 @@ public sealed class GeradorDeGraficos
   }
 
   /// <summary>
-  /// Quando duas ou mais séries têm praticamente os mesmos valores, as linhas ficam uma sobre
-  /// a outra e só a última desenhada aparece. Escreve no canto do painel quais estão sobrepostas,
-  /// para que nenhum algoritmo pareça ter "sumido".
+  /// Escala linear: os eixos começam em zero e mostram os valores como são, sem logaritmo.
+  /// Com <paramref name="somenteSubquadraticos"/>, cada painel omite as séries cujo expoente
+  /// ajustado passa de 1,5 (crescimento quadrático) e avisa quais foram omitidas.
   /// </summary>
-  private static void AnotarSobreposicoes(Plot grafico, Dictionary<string, double[]> series, double xDireita, double yInferior)
+  private void SalvarPainelLinearPorCaso(
+      string caminhoPng, string rotuloY, Func<LinhaResumo, double> valor, bool somenteSubquadraticos)
+  {
+    const double LimiteExpoenteSubquadratico = 1.5;
+
+    var multiplot = new Multiplot();
+    multiplot.AddPlots(_casos.Count);
+    int colunas = _casos.Count == 1 ? 1 : 2;
+    multiplot.Layout = new ScottPlot.MultiplotLayouts.Grid((_casos.Count + colunas - 1) / colunas, colunas);
+    double maximoX = _tamanhos[^1] * 1.04;
+
+    for (int i = 0; i < _casos.Count; i++)
+    {
+      var caso = _casos[i];
+      var grafico = multiplot.GetPlot(i);
+      EstiloGraficos.AplicarBase(grafico, NomeDoCaso(caso), "n", $"{rotuloY} (escala linear)");
+
+      var seriesLog = new Dictionary<string, double[]>();
+      var maximosPorSerie = new Dictionary<string, double>();
+      var omitidas = new List<string>();
+      double maximoY = 0;
+
+      foreach (string algoritmo in _algoritmos)
+      {
+        var linhas = Linhas(algoritmo, caso).Where(l => valor(l) > 0).ToList();
+        if (linhas.Count == 0)
+        {
+          continue;
+        }
+
+        double[] xs = [.. linhas.Select(l => (double)l.TamanhoAmostra)];
+        double[] ys = [.. linhas.Select(valor)];
+
+        if (somenteSubquadraticos && linhas.Count >= 2
+            && AjusteDeCurva.AjustarPotencia(xs, ys).Expoente > LimiteExpoenteSubquadratico)
+        {
+          omitidas.Add(algoritmo);
+          continue;
+        }
+
+        var (cor, marcador) = EstiloGraficos.DoAlgoritmo(algoritmo);
+        var serie = grafico.Add.Scatter(xs, ys, cor);
+        serie.LineWidth = EspessuraLinha;
+        serie.MarkerShape = marcador;
+        serie.MarkerSize = TamanhoMarcador;
+        serie.LegendText = algoritmo;
+
+        seriesLog[algoritmo] = [.. ys.Select(Math.Log10)];
+        maximosPorSerie[algoritmo] = ys.Max();
+        maximoY = Math.Max(maximoY, ys.Max());
+      }
+
+      var formatador = (double v) => v.ToString("N0", EstiloGraficos.Cultura);
+      grafico.Axes.Bottom.TickGenerator = new NumericAutomatic { LabelFormatter = formatador };
+      grafico.Axes.Left.TickGenerator = new NumericAutomatic { LabelFormatter = formatador };
+      grafico.Axes.SetLimits(0, maximoX, 0, maximoY * 1.06);
+
+      // Na escala linear, qualquer canto do painel pode ter dados; por isso os avisos vão
+      // num subtítulo, em vez de uma caixa sobre o gráfico.
+      var avisos = new List<string>();
+      avisos.AddRange(GruposSobrepostos(seriesLog).Select(g => $"sobrepostos: {string.Join(" = ", g.Select(NomeCurto))}"));
+
+      var proximosDeZero = maximosPorSerie
+          .Where(par => par.Value < maximoY * 0.02)
+          .Select(par => NomeCurto(par.Key))
+          .ToList();
+      if (proximosDeZero.Count > 0)
+      {
+        avisos.Add($"≈ 0 nesta escala: {string.Join(", ", proximosDeZero)}");
+      }
+
+      if (omitidas.Count > 0)
+      {
+        avisos.Add($"omitidos (quadráticos): {string.Join(", ", omitidas.Select(NomeCurto))}");
+      }
+
+      if (avisos.Count > 0)
+      {
+        grafico.Title($"{NomeDoCaso(caso)}\n{string.Join(" · ", avisos)}");
+        grafico.Axes.Title.Label.FontSize = 15;
+      }
+
+      // Sem as omissões, todos os painéis têm as mesmas séries e uma legenda basta.
+      // Com elas, cada painel tem séries diferentes e precisa da própria legenda.
+      if (i == 0 || somenteSubquadraticos)
+      {
+        EstiloGraficos.MostrarLegenda(grafico, Alignment.UpperLeft);
+      }
+      else
+      {
+        grafico.HideLegend();
+      }
+    }
+
+    int linhasDoGrid = (_casos.Count + colunas - 1) / colunas;
+    multiplot.SavePng(caminhoPng, LarguraPainel * colunas, AlturaPainel * linhasDoGrid);
+  }
+
+  /// <summary>
+  /// Quando duas ou mais séries têm praticamente os mesmos valores, as linhas ficam uma sobre
+  /// a outra e só a última desenhada aparece. Descreve quais estão sobrepostas, para que
+  /// nenhum algoritmo pareça ter "sumido". As séries devem estar em log₁₀.
+  /// </summary>
+  private static List<string> DescreverSobreposicoes(Dictionary<string, double[]> series)
+  {
+    var grupos = GruposSobrepostos(series);
+    return grupos.Count == 0
+        ? []
+        : ["Linhas sobrepostas (mesmos valores):\n" + string.Join("\n", grupos.Select(g => string.Join(" = ", g)))];
+  }
+
+  /// <summary>Grupos de séries (em log₁₀) com praticamente os mesmos valores em todos os pontos.</summary>
+  private static List<List<string>> GruposSobrepostos(Dictionary<string, double[]> series)
   {
     // Diferença máxima de 0,005 em log₁₀ (≈ 1%) em todos os pontos.
     const double Tolerancia = 0.005;
@@ -289,14 +415,22 @@ public sealed class GeradorDeGraficos
       }
     }
 
-    if (grupos.Count == 0)
+    return grupos;
+  }
+
+  /// <summary>Nome sem o sufixo " Sort", para caber nos subtítulos (ex.: "Merge").</summary>
+  private static string NomeCurto(string algoritmo) =>
+      algoritmo.EndsWith(" Sort", StringComparison.Ordinal) ? algoritmo[..^" Sort".Length] : algoritmo;
+
+  /// <summary>Caixa de aviso no canto inferior direito do painel; não desenha nada se não houver avisos.</summary>
+  private static void Anotar(Plot grafico, IReadOnlyList<string> avisos, double xDireita, double yInferior)
+  {
+    if (avisos.Count == 0)
     {
       return;
     }
 
-    string texto = "Linhas sobrepostas (mesmos valores):\n"
-        + string.Join("\n", grupos.Select(g => string.Join(" = ", g)));
-    var anotacao = grafico.Add.Text(texto, xDireita, yInferior);
+    var anotacao = grafico.Add.Text(string.Join("\n\n", avisos), xDireita, yInferior);
     anotacao.Alignment = Alignment.LowerRight;
     anotacao.OffsetX = -10;
     anotacao.OffsetY = -10;

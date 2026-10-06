@@ -24,6 +24,8 @@ public sealed class ComandoGraficos : IComando
       Lê o resumo.csv da pasta (padrão: o benchmark mais recente em '{PastaResultadosPadrao}')
       e cria, dentro dela:
         graficos/comparacoes_por_caso.png   Comparações × n (log-log), um painel por caso
+        graficos/comparacoes_linear.png     Comparações × n em escala linear (n² vira parábola)
+        graficos/comparacoes_linear_nlogn.png  O mesmo, só com as séries subquadráticas de cada caso
         graficos/tempo_por_caso.png         Tempo × n (log-log, média ± desvio), um painel por caso
         graficos/teoria_vs_pratica.png      Comparações medidas × fórmula do caso médio
         graficos/mapa_casos.png             Tempo mediano por algoritmo × caso, no maior n
@@ -51,6 +53,8 @@ public sealed class ComandoGraficos : IComando
     var graficos = new (string Arquivo, Action<string> Gerar)[]
     {
       ("comparacoes_por_caso.png", gerador.SalvarComparacoesPorCaso),
+      ("comparacoes_linear.png", gerador.SalvarComparacoesPorCasoLinear),
+      ("comparacoes_linear_nlogn.png", gerador.SalvarComparacoesPorCasoLinearSubquadraticos),
       ("tempo_por_caso.png", gerador.SalvarTempoPorCaso),
       ("teoria_vs_pratica.png", gerador.SalvarTeoriaVsPratica),
       ("mapa_casos.png", gerador.SalvarMapaDeCasos),
